@@ -51,16 +51,10 @@ AND Vehicle_Model__c = :model]]></salesforce:salesforce-query>
 						<ee:set-payload ><![CDATA[%dw 2.0
 import * from modules::postcode
 import * from modules::vehicle
-output application/json
+output application/java
 ---
-{
-"compositeRequest" : [
-{
-  "method" : "POST",
-  "url" : "/services/data/v53.0/sobjects/Lead",
-  "referenceId" : "refLead",
-  "body" : { 
-     	Salutation : vars.lead_data."salutation",	
+[{ 
+    Salutation : vars.lead_data."salutation",	
 	FirstName : vars.lead_data."firstname",
 	LastName : vars.lead_data."lastname",
 	Email : vars.lead_data."email",
@@ -81,12 +75,11 @@ output application/json
     "vehicle_model__c" : vars.lead_data."vehicle_model",
     vehicle__c : getCar(car, vars.lead_data."vehicle_model")
     }
-  }]
-}
+]
 ]]></ee:set-payload>
 					</ee:message>
 				</ee:transform>
-				<salesforce-composite:execute-composite-request doc:name="Execute composite request" doc:id="9eef7bb8-0f49-4da7-bdc8-837268a875f0" config-ref="Salesforce_Composite_Config1"/>
+				<salesforce:upsert doc:name="Upsert" doc:id="cdd236dc-5332-44c8-885d-417da234df5f" config-ref="Salesforce_Config" objectType="Lead" externalIdFieldName="Email"/>
 				<logger level="INFO" doc:name="Logger" doc:id="715a5598-b3de-4370-989a-322517d5b138" />
 				<ee:transform doc:name="Transform Message" doc:id="d0048bd0-2af1-4398-a1e4-581b23bcbb4b" >
 					<ee:message >
@@ -94,8 +87,8 @@ output application/json
 output application/json
 ---
 {
-   id : payload.compositeResponse.body.id[0],
-   status : payload.compositeResponse.body.success[0] 
+    "id": payload.items.payload.id reduce ((item, accumulator) -> item),
+    "status": payload.items.payload.success reduce ((item, accumulator) -> item )
 }]]></ee:set-payload>
 					</ee:message>
 				</ee:transform>
@@ -141,15 +134,11 @@ payload]]></ee:set-variable>
 						<ee:set-payload ><![CDATA[%dw 2.0
 import * from modules::postcode
 import * from modules::vehicle
-output application/json
+output application/java
 ---
-{
-"compositeRequest" : [{
-  "method" : "POST",
-  "url" : "/services/data/v53.0/sobjects/Contact",
-  "referenceId" : "refCustContact",
-  "body" : { RecordTypeId : "0125j000000Po9jAAC",
-               Salutation : vars.lead_data."salutation",	
+[{ 
+	RecordTypeId : "0125j000000Po9jAAC",
+    Salutation : vars.lead_data."salutation",	
 	FirstName : vars.lead_data."firstname",
 	LastName : vars.lead_data."lastname",
 	Email : vars.lead_data."email",
@@ -158,48 +147,21 @@ output application/json
 	MailingCity : vars.lead_data."city",
 	"MailingState" : vars.lead_data."state",
 	"MailingPostalCode" : vars.lead_data."postcode",
-	MailingCountry : vars.lead_data."country" }
-  },
-{
-  "method" : "POST",
-  "url" : "/services/data/v53.0/sobjects/Lead",
-  "referenceId" : "refLead",
-  "body" : { 
-     	Salutation : vars.lead_data."salutation",	
-	FirstName : vars.lead_data."firstname",
-	LastName : vars.lead_data."lastname",
-	Email : vars.lead_data."email",
-	Phone : vars.lead_data."phone",
-	Company : "MG",
-	Street : vars.lead_data."street",
-	City : vars.lead_data."city",
-	State : vars.lead_data."state",
-	PostalCode : vars.lead_data."postcode",
-	Country : vars.lead_data."country",
-	Description : vars.lead_data."message",
-	Availability__c : "Yes",
-	Marketing_Use__c : "Yes",
-	Need_Appointment__c : "Yes",
-    "Dealer_contact__c" : getDealer(post, vars.lead_data."postcode"),
-    "Customer_contact__c" : "@{refCustContact.id}",
-    Expected_Service__c	 : vars.lead_data."service_type",
-    "vehicle_model__c" : vars.lead_data."vehicle_model",
-    vehicle__c : getCar(car, vars.lead_data."vehicle_model")
-    }
-  }]
-}]]></ee:set-payload>
+	MailingCountry : vars.lead_data."country" 
+	}
+  ]]]></ee:set-payload>
 					</ee:message>
 				</ee:transform>
-				<salesforce-composite:execute-composite-request doc:name="Execute composite request" doc:id="727ac12f-2c87-452b-b117-3072fbf90235" config-ref="Salesforce_Composite_Config1"/>
+				<salesforce:upsert doc:name="Upsert" doc:id="fbbf6dcf-6bc4-4283-a327-048176fd92bf" config-ref="Salesforce_Config" objectType="Contact" externalIdFieldName="Email" />
 				<logger level="INFO" doc:name="Logger" doc:id="a5666673-a058-414b-a5d0-85cd2317395f" />
-				<ee:transform doc:name="Transform Message" doc:id="2c963151-bb7a-4c1e-9d2c-7ec22d2318bb" >
+				<ee:transform doc:name="Transform Message" doc:id="65bc35c5-7e87-4454-aad2-47debb81e024" >
 					<ee:message >
 						<ee:set-payload ><![CDATA[%dw 2.0
 output application/json
 ---
 {
-id : payload.compositeResponse.body.id[0],
-status : payload.compositeResponse.body.success[0] 
+    "id": payload.items.payload.id reduce ((item, accumulator) -> item),
+    "status": payload.items.payload.success reduce ((item, accumulator) -> item )
 }]]></ee:set-payload>
 					</ee:message>
 				</ee:transform>
